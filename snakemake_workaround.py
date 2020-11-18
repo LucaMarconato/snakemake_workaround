@@ -201,9 +201,9 @@ def plot(rule, node0, node1):
 def rm_command(rule, node0, node1, plot):
     build_graph(rule)
     subgraph = find_subgraph(node0, node1)
-    _rm_command(subgraph)
     if plot:
         _plot(subgraph)
+    _rm_command(subgraph)
 
 
 @click.group()
