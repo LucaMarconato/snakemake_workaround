@@ -49,7 +49,7 @@ label_dict: Dict[str, str] = dict()
 
 
 def build_graph(rule):
-    os.chdir('/data/l989o/deployed/spatial_uzh')
+    # os.chdir('/data/l989o/deployed/spatial_uzh')
 
     try:
         s = subprocess.check_output(f'/data/l989o/miniconda3/envs/spatial_uzh2/bin/snakemake {rule} --forceall --rerun-incomplete -n', shell=True).decode('utf-8')
