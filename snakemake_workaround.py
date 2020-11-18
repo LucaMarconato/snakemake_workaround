@@ -174,8 +174,8 @@ def _rm_command(subgraph):
             if os.path.isdir(f):
                 print('skipping directory:', f)
             else:
-                assert os.path.isfile(f)
                 if os.path.exists(f):
+                    assert os.path.isfile(f)
                     os.remove(f)
                 else:
                     print('skipping non-existing:', f)
