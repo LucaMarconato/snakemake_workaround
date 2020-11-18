@@ -177,6 +177,7 @@ def _rm_command(subgraph):
                 if os.path.exists(f):
                     assert os.path.isfile(f)
                     os.remove(f)
+                    print('removed:', f)
                 else:
                     print('skipping non-existing:', f)
     # print(f'for f in {" ".join(to_rm)}; do rm $f; done')
