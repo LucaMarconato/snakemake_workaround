@@ -1,4 +1,5 @@
 import click
+import shutil
 import os
 import re
 import subprocess
@@ -165,7 +166,17 @@ def _rm_command(subgraph):
         if type(obj) == FileNode:
             to_rm.append(obj.filename)
     assert all([' ' not in f for f in to_rm])
-    print(f'for f in {" ".join(to_rm)}; do rm $f; done')
+
+    print('ready to delete the following files:')
+    print('\n'.join(sorted(to_rm, key=lambda x: x[::-1])))
+    if click.confirm('do you want to continue?', default=True):
+        for f in to_rm:
+            if os.path.isdir(f):
+                print('skipping directory:', f)
+            else:
+                os.remove(f)
+    # print(f'for f in {" ".join(to_rm)}; do rm $f; done')
+
 
 @click.command()
 @click.option('--rule', type=str, required=True, help='snakemake rule used to build the dag')
