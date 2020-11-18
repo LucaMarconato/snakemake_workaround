@@ -48,7 +48,7 @@ label_dict: Dict[str, str] = dict()
 
 
 def build_graph(rule):
-    # os.chdir('/data/l989o/deployed/spatial_uzh')
+    os.chdir('/data/l989o/deployed/spatial_uzh')
 
     try:
         s = subprocess.check_output(f'/data/l989o/miniconda3/envs/spatial_uzh2/bin/snakemake {rule} --forceall --rerun-incomplete -n', shell=True).decode('utf-8')
@@ -102,16 +102,17 @@ def build_graph(rule):
                 inputs = sorted(inputs)
                 # print(inputs)
                 assert rule_node is not None
-                inputs_node = InputsNode(frozenset(inputs))
-                edges[inputs_node].append(rule_node)
-                graph.add_edge(inputs_node.id, rule_node.id)
-                nodes[inputs_node.id] = inputs_node
-                label_dict[inputs_node.id] = inputs_node.label
+                # inputs_node = InputsNode(frozenset(inputs))
+                # edges[inputs_node].append(rule_node)
+                # graph.add_edge(inputs_node.id, rule_node.id)
+                # nodes[inputs_node.id] = inputs_node
+                # label_dict[inputs_node.id] = inputs_node.label
                 for x in inputs:
                     file_node = FileNode(x)
-                    # e = Edge(file_node, inputs_node)
-                    edges[file_node].append(inputs_node)
-                    graph.add_edge(file_node.id, inputs_node.id)
+                    edges[file_node].append(rule_node)
+                    graph.add_edge(file_node.id, rule_node.id)
+                    # edges[file_node].append(inputs_node)
+                    # graph.add_edge(file_node.id, inputs_node.id)
                     nodes[file_node.id] = file_node
                     label_dict[file_node.id] = file_node.label
                     # file_nodes[file_node] = x
@@ -133,6 +134,7 @@ def find_subgraph(node0, node1):
         return None
     elif node0 is not None and node1 is None:
         nodes_of_paths = nx.algorithms.descendants(graph, node0)
+        nodes_of_paths.add(node0)
     else:
         paths = all_simple_paths(graph, node0, node1)
         nodes_of_paths = []
@@ -150,7 +152,7 @@ def _plot(subgraph=None):
     nx.draw_networkx(graph, pos, with_labels=True, labels=label_dict, font_size=7, arrowstyle='-|>', arrowsize=20, arrows=True, node_color=colors)
     if subgraph is not None:
         orange = (1.0, 0.6823529411764706, 0.25882352941176473, 0.8)
-        nx.draw_networkx_edges(subgraph, pos, edge_color=orange, width=3)
+        nx.draw_networkx_edges(subgraph, pos, edge_color=orange, width=3, arrowstyle='-|>', arrowsize=20, arrows=True)
     # plt.savefig('simple_path.png')
     plt.show()
 
