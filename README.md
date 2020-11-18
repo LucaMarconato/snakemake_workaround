@@ -7,7 +7,7 @@ Use at your own risk.
 
 ```batch
 
-    $ pip install snakemake_workaround
+    $ python setup.py install
 ```
 
 ## Usage
@@ -26,6 +26,7 @@ where:
 Example command:
     `rm-command --rule short --node0 compute_region_centers --node1 _train_models --plot True`
 
+Red nodes are rules, green nodes are files, black nodes aggregates list of inputs for the same rule, and make visualization a bit easier.
 ![Exapmle plot](./dag.png)
 
 Example output:
