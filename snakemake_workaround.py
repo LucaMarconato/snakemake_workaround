@@ -174,7 +174,11 @@ def _rm_command(subgraph):
             if os.path.isdir(f):
                 print('skipping directory:', f)
             else:
-                os.remove(f)
+                assert os.path.isfile(f)
+                if os.path.exists(f):
+                    os.remove(f)
+                else:
+                    print('skipping non-existing:', f)
     # print(f'for f in {" ".join(to_rm)}; do rm $f; done')
 
 
