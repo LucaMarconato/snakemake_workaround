@@ -7,7 +7,7 @@ Use at your own risk.
 
 ```batch
 
-    $ pip install snakemake_workaround
+    $ python setup.py install
 ```
 
 ## Usage
