@@ -4,32 +4,11 @@ import re
 import subprocess
 from collections import defaultdict
 from typing import List, Dict, FrozenSet
-from bidict import bidict
 import networkx as nx
 import matplotlib.pyplot as plt
 from networkx.drawing.nx_agraph import graphviz_layout
 from networkx.algorithms.simple_paths import all_simple_paths
 
-
-# function smk_out () {
-#         files=`snakemake $1 --force --rerun-incomplete -n | perl -0777pe "s/[\s\S]*rule $1:\n[[:space:]]+input: (.*)[\s\S]*/\1/g" | tr "," " " | xargs`
-#         echo $files
-# }
-
-
-# @click.command()
-# def (instance_hash, compute, visualize):
-#
-#
-# @click.group()
-# def cli():
-#     pass
-#
-#
-# cli.add_command(benchmark_neighbors_reconstruction)
-#
-# if __name__ == '__main__':
-#     cli()
 
 class Node:
     pass
@@ -62,27 +41,14 @@ class RuleNode(Node):
         self.color = (1., 0., 0.)
 
 
-#
-# class Edge:
-#     def __init__(self, input_node, output_node):
-#         self.input_node = input_node
-#         self.output_node = output_node
-
-
-# file_nodes: bidict[FileNode, str] = bidict()
-# rule_nodes: bidict[RuleNode, str] = bidict()
 nodes: Dict[str, Node] = dict()
 edges: Dict[Node, List[Node]] = defaultdict(list)
 graph = nx.DiGraph()
 label_dict: Dict[str, str] = dict()
 
-if __name__ == '__main__':
-    os.chdir('/data/l989o/deployed/spatial_uzh')
-    rule = 'short'
-    node0 = 'precompute_global_cell_indices'
-    node1 = 'short'
-    # subprocess.run('bash -c "source activate spatial_uzh2; python -V"', shell=True)
-    # s = subprocess.check_output(f'snakemake {rule} --force --rerun-incomplete -n', shell=True)
+
+def build_graph(rule):
+    # os.chdir('/data/l989o/deployed/spatial_uzh')
 
     try:
         s = subprocess.check_output(f'/data/l989o/miniconda3/envs/spatial_uzh2/bin/snakemake {rule} --forceall --rerun-incomplete -n', shell=True).decode('utf-8')
@@ -159,10 +125,13 @@ if __name__ == '__main__':
                     nodes[file_node.id] = file_node
                     label_dict[file_node.id] = file_node.label
                 # print(outputs)
-    assert nx.algorithms.is_directed_acyclic_graph(graph)
 
-    node1 = None
-    if node1 is None:
+
+def find_subgraph(node0, node1):
+    assert nx.algorithms.is_directed_acyclic_graph(graph)
+    if node0 is None and node1 is None:
+        return None
+    elif node0 is not None and node1 is None:
         nodes_of_paths = nx.algorithms.descendants(graph, node0)
     else:
         paths = all_simple_paths(graph, node0, node1)
@@ -170,14 +139,67 @@ if __name__ == '__main__':
         for path in paths:
             nodes_of_paths.extend(list(path))
     subgraph = graph.subgraph(nodes_of_paths)
+    return subgraph
 
+
+def _plot(subgraph=None):
     plt.figure(figsize=(20, 11))
     # pos = nx.spring_layout(graph)
     colors = [nodes[node_id].color for node_id in graph.nodes()]
     pos = graphviz_layout(graph)
     nx.draw_networkx(graph, pos, with_labels=True, labels=label_dict, font_size=7, arrowstyle='-|>', arrowsize=20, arrows=True, node_color=colors)
-    orange = (1.0, 0.6823529411764706, 0.25882352941176473, 0.8)
-    nx.draw_networkx_edges(subgraph, pos, edge_color=orange, width=3)
+    if subgraph is not None:
+        orange = (1.0, 0.6823529411764706, 0.25882352941176473, 0.8)
+        nx.draw_networkx_edges(subgraph, pos, edge_color=orange, width=3)
     # plt.savefig('simple_path.png')
     plt.show()
-    print('ehi')
+
+
+def _rm_command(subgraph):
+    assert len(list(nx.isolates(subgraph))) == 0
+    to_rm = []
+    for node in subgraph.nodes():
+        obj = nodes[node]
+        if type(obj) == FileNode:
+            to_rm.append(obj.filename)
+    assert all([' ' not in f for f in to_rm])
+    print(f'for f in {" ".join(to_rm)}; do rm $f; done')
+
+@click.command()
+@click.option('--rule', type=str, required=True, help='snakemake rule used to build the dag')
+@click.option('--node0', type=str, required=False,
+              help='str (rule name or full path)', default=None)
+@click.option('--node1', type=str, required=False,
+              help='str (rule name or full path)', default=None)
+def plot(rule, node0, node1):
+    assert not (node1 is not None and node0 is None)
+    build_graph(rule)
+    subgraph = find_subgraph(node0, node1)
+    _plot(subgraph)
+
+
+@click.command()
+@click.option('--rule', type=str, required=True, help='snakemake rule used to build the dag')
+@click.option('--node0', type=str, required=False,
+              help='str (rule name or full path)', default=None)
+@click.option('--node1', type=str, required=False,
+              help='str (rule name or full path)', default=None)
+@click.option('--plot', type=bool, required=False, help='plot the graph', default=False)
+def rm_command(rule, node0, node1, plot):
+    build_graph(rule)
+    subgraph = find_subgraph(node0, node1)
+    _rm_command(subgraph)
+    if plot:
+        _plot(subgraph)
+
+
+@click.group()
+def cli():
+    pass
+
+
+cli.add_command(plot)
+cli.add_command(rm_command)
+
+if __name__ == '__main__':
+    cli()
