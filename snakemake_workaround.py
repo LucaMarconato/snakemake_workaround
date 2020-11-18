@@ -166,9 +166,10 @@ def _rm_command(subgraph):
         if type(obj) == FileNode:
             to_rm.append(obj.filename)
     assert all([' ' not in f for f in to_rm])
+    to_rm = sorted(to_rm, key=lambda x: x[::-1])
 
     print('ready to delete the following files:')
-    print('\n'.join(sorted(to_rm, key=lambda x: x[::-1])))
+    print('\n'.join(to_rm))
     if click.confirm('do you want to continue?', default=True):
         for f in to_rm:
             if os.path.isdir(f):
